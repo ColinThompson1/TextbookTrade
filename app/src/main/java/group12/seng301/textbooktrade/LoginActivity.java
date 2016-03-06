@@ -3,6 +3,8 @@ package group12.seng301.textbooktrade;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.ActionBar;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -19,6 +21,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -28,6 +31,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.app.ActionBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,11 +49,17 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private static final int REQUEST_READ_CONTACTS = 0;
 
     /**
+     * Key to password and email for use in 'RegisterActivity'.
+     */
+    public static final String PASSWORD_KEY = "group12.seng301.LoginActivity.PASSWORD";
+    public static final String EMAIL_KEY = "group12.seng301.LoginActivity.EMAIL";
+
+    /**
      * A dummy authentication store containing known user names and passwords.
      * TODO: remove after connecting to a real authentication system.
      */
     private static final String[] DUMMY_CREDENTIALS = new String[]{
-            "foo@example.com:hello", "bar@example.com:world"
+            "test1@ucalgary.ca:testing", "testing@ucalgary.ca:testing"
     };
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
@@ -65,6 +75,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //Hide action bar
+        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        actionBar.hide();
+
         setContentView(R.layout.activity_login);
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
@@ -185,18 +199,16 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
+            mAuthTask = new UserLoginTask(email, password, this);
             mAuthTask.execute((Void) null);
         }
     }
 
     private boolean isEmailValid(String email) {
-        //TODO: Replace this with your own logic
         return email.contains("@ucalgary.ca");
     }
 
     private boolean isPasswordValid(String password) {
-        //TODO: Replace this with your own logic
         return password.length() > 4;
     }
 
@@ -291,17 +303,19 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     }
 
     /**
-     * Represents an asynchronous login/registration task used to authenticate
+     * Represents an asynchronous login task used to authenticate
      * the user.
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
         private final String mEmail;
         private final String mPassword;
+        private final AppCompatActivity activity;
 
-        UserLoginTask(String email, String password) {
+        UserLoginTask(String email, String password, AppCompatActivity activity) {
             mEmail = email;
             mPassword = password;
+            this.activity = activity;
         }
 
         @Override
@@ -323,7 +337,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 }
             }
 
-            // TODO: register the new account here.
+            // If user not in database try to register them using the
+            // register activity.
+            Intent intent = new Intent(activity, RegisterActivity.class);
+            intent.putExtra(LoginActivity.PASSWORD_KEY, mPassword);
+            intent.putExtra(LoginActivity.EMAIL_KEY, mEmail);
+            startActivity(intent);
+
             return true;
         }
 
