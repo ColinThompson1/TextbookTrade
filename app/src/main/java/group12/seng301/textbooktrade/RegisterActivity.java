@@ -2,11 +2,13 @@ package group12.seng301.textbooktrade;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.ActionBar;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -30,6 +32,11 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
         setTitle("Register");
+
+        // Put back but on action bar.
+   //     ActionBar actionBar = this.getActionBar();
+   //     actionBar.setHomeButtonEnabled(true);
+
 
         // Set up Autocomplete Text View
         majorView = (AutoCompleteTextView)
@@ -68,6 +75,15 @@ public class RegisterActivity extends AppCompatActivity {
         });
 
 
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            this.finish();
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
+        }
     }
 
     /**
