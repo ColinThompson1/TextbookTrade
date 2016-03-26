@@ -5,7 +5,7 @@ import group12.seng301.textbooktrade.RegisterActivity;
 
 public class Book {
 
-    private String name, author;
+    private String name, author, imageURL;
     private RegisterActivity.Major topic;
     private User user;
     private int usefullness, condition;
@@ -80,6 +80,14 @@ public class Book {
             super("Rating must be [0, 5]!");
         }
 
+    }
+
+    public String getImageURL() {
+        return imageURL;
+    }
+
+    public void setImageURL(String imageURL) {
+        this.imageURL = imageURL;
     }
 
 
