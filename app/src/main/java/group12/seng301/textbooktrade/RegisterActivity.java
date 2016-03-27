@@ -8,6 +8,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -15,6 +16,8 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import group12.seng301.textbooktrade.objects.User;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -129,7 +132,7 @@ public class RegisterActivity extends AppCompatActivity {
         // Check if everything was successful.
         if (success) {
             loadingScreen(true);
-            registerTask = new RegisterTask(email, cfmPwd, name, major);
+            registerTask = new RegisterTask(email, cfmPwd, name, major, this);
             registerTask.execute((Void) null);
 
         } else {
@@ -192,12 +195,15 @@ public class RegisterActivity extends AppCompatActivity {
     private class RegisterTask extends AsyncTask<Void, Void, Boolean> {
 
         private String email, pwd, name, major;
+        private final AppCompatActivity activity;
+        private long userId;
 
-        public RegisterTask(String email, String pwd, String name, String major) {
+        public RegisterTask(String email, String pwd, String name, String major, AppCompatActivity activity) {
             this.email = email;
             this.pwd = pwd;
             this.name = name;
             this.major = major;
+            this.activity = activity;
         }
 
         @Override
@@ -209,8 +215,10 @@ public class RegisterActivity extends AppCompatActivity {
                 return false;
             }
 
-            // TODO: Register in database
-
+            User newUser = new User(email, name, Major.valueFor(major), pwd);
+            TextbooksDatabaseHelper databaseHelper = TextbooksDatabaseHelper.getInstance(activity);
+            userId = databaseHelper.addOrUpdateUser(newUser);
+            if (userId == -1) return false;
 
             return true;
         }
@@ -221,11 +229,15 @@ public class RegisterActivity extends AppCompatActivity {
             loadingScreen(false);
 
             if (success) {
-                finish();
-                // TODO: Launch new Activity
+                Intent intent = new Intent(activity, BookListActivity.class);
+                intent.putExtra("USER_ID", userId);
+                intent.addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+                startActivity(intent);
+                activity.finish();
             } else {
                 loadingScreen(false);
-                // TODO: Popup explaining error registering user.
+                Log.d(this.getClass().getName(), "Error registering user");
             }
 
         }
@@ -341,12 +353,19 @@ public class RegisterActivity extends AppCompatActivity {
        EDUCATION ("Education");
 
 
+       private final String alais;
 
-        private final String alais;
-
-        Major(String alais) {
+       Major(String alais) {
             this.alais = alais;
         }
+
+       public static Major valueFor(String name) {
+           for (Major major : Major.values()) {
+               if (major.alais.equalsIgnoreCase(name))
+                   return major;
+           }
+           return null;
+       }
 
     }
 

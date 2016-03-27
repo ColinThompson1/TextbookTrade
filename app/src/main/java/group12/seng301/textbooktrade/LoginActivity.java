@@ -36,6 +36,8 @@ import android.app.ActionBar;
 import java.util.ArrayList;
 import java.util.List;
 
+import group12.seng301.textbooktrade.objects.User;
+
 import static android.Manifest.permission.READ_CONTACTS;
 
 /**
@@ -340,13 +342,27 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 return false;
             }
 
+
+            TextbooksDatabaseHelper databaseHelper = TextbooksDatabaseHelper.getInstance(activity);
+            long userID = databaseHelper.getExistingUser(mEmail);
+            if ( userID != -1) {
+                if (databaseHelper.authenticate(mEmail, mPassword)) {
+                    Intent intent = new Intent(activity, BookListActivity.class);
+                    intent.putExtra("USER_ID", userID);
+                    intent.addFlags(
+                            Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+                    startActivity(intent);
+                }
+                return false;
+            }
+            /*
             for (String credential : DUMMY_CREDENTIALS) {
                 String[] pieces = credential.split(":");
                 if (pieces[0].equals(mEmail)) {
                     // Account exists, return true if the password matches.
                     return pieces[1].equals(mPassword);
                 }
-            }
+            } */
 
             // If user not in database try to register them using the
             // register activity.
@@ -354,6 +370,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             intent.putExtra(LoginActivity.PASSWORD_KEY, mPassword);
             intent.putExtra(LoginActivity.EMAIL_KEY, mEmail);
             startActivity(intent);
+            activity.finish();
 
             return true;
         }
@@ -364,7 +381,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             showProgress(false);
 
             if (success) {
-                // Stuff here
+                finish();
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();

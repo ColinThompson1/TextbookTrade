@@ -38,6 +38,7 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_USER_ID = "id";
     private static final String KEY_USER_NAME = "fullName";
     private static final String KEY_USER_EMAIL = "email";
+    private static final String KEY_USER_PASSWORD = "password";
     private static final String KEY_USER_MAJOR = "major";
     private static final String KEY_USER_BOOKS = "books";
 
@@ -89,8 +90,8 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
                 KEY_USER_ID + " INTEGER PRIMARY KEY," +
                 KEY_USER_NAME + " TEXT," +
                 KEY_USER_EMAIL + " TEXT," +
-                KEY_USER_MAJOR + " TEXT," +
-                KEY_USER_BOOKS + " TEXT" + // TODO: Reference here. or other implementation
+                KEY_USER_PASSWORD + " TEXT," +
+                KEY_USER_MAJOR + " TEXT" +
                 ")";
 
         db.execSQL(CREATE_BOOK_TABLE);
@@ -156,8 +157,8 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
             ContentValues values = new ContentValues();
             values.put(KEY_USER_NAME, user.getFullname());
             values.put(KEY_USER_EMAIL, user.getEmail());
+            values.put(KEY_USER_PASSWORD, user.getPassword());
             values.put(KEY_USER_MAJOR, user.getMajor().toString());
-            values.put(KEY_USER_BOOKS, user.getEmail()); //Todo: books
 
             // First try to update the user in case the user already exists in the database
             // This assumes userNames are unique
@@ -193,12 +194,12 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Return existing user id or -1 if not found
-    public long getExistingUser(User user) {
+    public long getExistingUser(String email) {
         SQLiteDatabase db = getReadableDatabase();
         long userId = -1;
 
-        String usersSelectQuery = String.format("SELECT * FROM %s WHERE %s = %s",
-                TABLE_USERS, KEY_USER_EMAIL, user.getEmail());
+        String usersSelectQuery = String.format("SELECT * FROM %s WHERE %s = '%s'",
+                TABLE_USERS, KEY_USER_EMAIL, email);
 
         Cursor cursor = db.rawQuery(usersSelectQuery, null);
         try {
@@ -212,6 +213,27 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
                 cursor.close();
         }
         return userId;
+    }
+
+    // Returns true for successful authentication.
+    public boolean authenticate(String email, String password) {
+        SQLiteDatabase db = getReadableDatabase();
+        boolean success = false;
+        String usersSelectQuery = String.format("SELECT * FROM %s WHERE %s = '%s' AND %s = '%s'",
+                TABLE_USERS, KEY_USER_EMAIL, email, KEY_USER_PASSWORD, password);
+
+        Cursor cursor = db.rawQuery(usersSelectQuery, null);
+        try {
+            if (cursor.moveToFirst()) {
+                success = true;
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "Error while checking for existing user");
+        } finally {
+            if (cursor != null && !cursor.isClosed())
+                cursor.close();
+        }
+        return success;
     }
 
     public List<Book> getAllBooks() {
@@ -265,7 +287,7 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
         // ON BOOKS.KEY_BOOK_USER_ID_FK = USERS.KEY_USER_ID
         // WHERE THE USER MATCHES SPECIFIED
         String BOOKS_SELECT_QUERY =
-                String.format("SELECT * FROM %s LEFT OUTER JOIN %s ON %s.%s = %s.%s WHERE %s.%s = %s",
+                String.format("SELECT * FROM %s LEFT OUTER JOIN %s ON %s.%s = %s.%s WHERE %s.%s = '%s'",
                         TABLE_BOOKS,
                         TABLE_USERS,
                         TABLE_BOOKS, KEY_BOOK_USER_ID_FK,
@@ -310,7 +332,7 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
         // LEFT OUTER JOIN USERS
         // ON BOOKS.KEY_BOOK_USER_ID_FK = USERS.KEY_USER_ID
         String BOOKS_SELECT_QUERY =
-                String.format("SELECT * FROM %s LEFT OUTER JOIN %s ON %s.%s = %s.%s WHERE %s.%s LIKE %%%s%%",
+                String.format("SELECT * FROM %s LEFT OUTER JOIN %s ON %s.%s = %s.%s WHERE %s.%s LIKE '%%%s%%'",
                         TABLE_BOOKS,
                         TABLE_USERS,
                         TABLE_BOOKS, KEY_BOOK_USER_ID_FK,
@@ -355,7 +377,7 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
         // LEFT OUTER JOIN USERS
         // ON BOOKS.KEY_BOOK_USER_ID_FK = USERS.KEY_USER_ID
         String BOOKS_SELECT_QUERY =
-                String.format("SELECT * FROM %s LEFT OUTER JOIN %s ON %s.%s = %s.%s WHERE %s.%s LIKE %%%s%%",
+                String.format("SELECT * FROM %s LEFT OUTER JOIN %s ON %s.%s = %s.%s WHERE %s.%s LIKE '%%%s%%'",
                         TABLE_BOOKS,
                         TABLE_USERS,
                         TABLE_BOOKS, KEY_BOOK_USER_ID_FK,
