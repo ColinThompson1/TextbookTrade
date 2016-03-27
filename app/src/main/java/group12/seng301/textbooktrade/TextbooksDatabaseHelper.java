@@ -8,6 +8,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.EventLogTags;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import group12.seng301.textbooktrade.objects.Book;
 import group12.seng301.textbooktrade.objects.User;
 
@@ -26,6 +29,7 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_BOOK_USER_ID_FK = "userId";
     private static final String KEY_BOOK_NAME = "text";
     private static final String KEY_BOOK_AUTHOR = "author";
+    private static final String KEY_BOOK_TYPE = "type";
     private static final String KEY_BOOK_USEFULLNESS = "usefullness";
     private static final String KEY_BOOK_CONDITION = "condition";
     private static final String KEY_BOOK_IMAGE_URL = "imageUrl";
@@ -74,6 +78,7 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
                 KEY_BOOK_USER_ID_FK + " INTEGER REFERENCES " + TABLE_USERS + "," + // Define a foreign key
                 KEY_BOOK_NAME + " TEXT," +
                 KEY_BOOK_AUTHOR + " TEXT," +
+                KEY_BOOK_TYPE + " TEXT," +
                 KEY_BOOK_USEFULLNESS + " INTEGER," +
                 KEY_BOOK_CONDITION + " INTEGER," +
                 KEY_BOOK_IMAGE_URL + " TEXT" +
@@ -107,7 +112,7 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Insert a book into the database
-    public void addPost(Book book) {
+    public void addBook(Book book) {
         // Create and/or open the database for writing
         SQLiteDatabase db = getWritableDatabase();
 
@@ -120,6 +125,7 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
             values.put(KEY_BOOK_USER_ID_FK, userId);
             values.put(KEY_BOOK_NAME, book.getName());
             values.put(KEY_BOOK_AUTHOR, book.getAuthor());
+            values.put(KEY_BOOK_TYPE, book.getTopic().toString());
             values.put(KEY_BOOK_USEFULLNESS, book.getUsefullness());
             values.put(KEY_BOOK_CONDITION, book.getCondition());
             values.put(KEY_BOOK_IMAGE_URL, book.getImageURL());
@@ -184,5 +190,206 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
             db.endTransaction();
         }
         return userId;
+    }
+
+    // Return existing user id or -1 if not found
+    public long getExistingUser(User user) {
+        SQLiteDatabase db = getReadableDatabase();
+        long userId = -1;
+
+        String usersSelectQuery = String.format("SELECT * FROM %s WHERE %s = %s",
+                TABLE_USERS, KEY_USER_EMAIL, user.getEmail());
+
+        Cursor cursor = db.rawQuery(usersSelectQuery, null);
+        try {
+            if (cursor.moveToFirst()) {
+                userId = cursor.getLong(cursor.getColumnIndex(KEY_USER_ID));
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "Error while checking for existing user");
+        } finally {
+            if (cursor != null && !cursor.isClosed())
+                cursor.close();
+        }
+        return userId;
+    }
+
+    public List<Book> getAllBooks() {
+        List<Book> books = new ArrayList<>();
+
+        // SELECT * FROM BOOKS
+        // LEFT OUTER JOIN USERS
+        // ON BOOKS.KEY_BOOK_USER_ID_FK = USERS.KEY_USER_ID
+        String BOOKS_SELECT_QUERY =
+                String.format("SELECT * FROM %s LEFT OUTER JOIN %s ON %s.%s = %s.%s",
+                        TABLE_BOOKS,
+                        TABLE_USERS,
+                        TABLE_BOOKS, KEY_BOOK_USER_ID_FK,
+                        TABLE_USERS, KEY_USER_ID);
+
+        // "getReadableDatabase()" and "getWriteableDatabase()" return the same object (except under low
+        // disk space scenarios)
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery(BOOKS_SELECT_QUERY, null);
+        try {
+            if (cursor.moveToFirst()) {
+                do {
+                    User newUser = new User(cursor.getString((cursor.getColumnIndex(KEY_USER_EMAIL))),
+                            cursor.getString((cursor.getColumnIndex(KEY_USER_NAME))),
+                            RegisterActivity.Major.valueOf(cursor.getString((cursor.getColumnIndex(KEY_USER_MAJOR)))));
+
+                    Book newBook = new Book(cursor.getString(cursor.getColumnIndex(KEY_BOOK_NAME)),
+                            RegisterActivity.Major.valueOf(cursor.getString(cursor.getColumnIndex(KEY_BOOK_TYPE))));
+                    newBook.setAuthor(cursor.getString(cursor.getColumnIndex(KEY_BOOK_AUTHOR)));
+                    newBook.setUsefullness(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_USEFULLNESS)));
+                    newBook.setCondition(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_CONDITION)));
+                    newBook.setUser(newUser);
+                    books.add(newBook);
+                } while(cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "Error while trying to get all books from database");
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
+        }
+        return books;
+    }
+
+    public List<Book> getBooksByUser(final String email) {
+        List<Book> books = new ArrayList<>();
+
+        // SELECT * FROM BOOKS
+        // LEFT OUTER JOIN USERS
+        // ON BOOKS.KEY_BOOK_USER_ID_FK = USERS.KEY_USER_ID
+        // WHERE THE USER MATCHES SPECIFIED
+        String BOOKS_SELECT_QUERY =
+                String.format("SELECT * FROM %s LEFT OUTER JOIN %s ON %s.%s = %s.%s WHERE %s.%s = %s",
+                        TABLE_BOOKS,
+                        TABLE_USERS,
+                        TABLE_BOOKS, KEY_BOOK_USER_ID_FK,
+                        TABLE_USERS, KEY_USER_ID,
+                        TABLE_USERS, KEY_USER_EMAIL,
+                        email);
+
+        // "getReadableDatabase()" and "getWriteableDatabase()" return the same object (except under low
+        // disk space scenarios)
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery(BOOKS_SELECT_QUERY, null);
+        try {
+            if (cursor.moveToFirst()) {
+                do {
+                    User newUser = new User(cursor.getString((cursor.getColumnIndex(KEY_USER_EMAIL))),
+                            cursor.getString((cursor.getColumnIndex(KEY_USER_NAME))),
+                            RegisterActivity.Major.valueOf(cursor.getString((cursor.getColumnIndex(KEY_USER_MAJOR)))));
+
+                    Book newBook = new Book(cursor.getString(cursor.getColumnIndex(KEY_BOOK_NAME)),
+                            RegisterActivity.Major.valueOf(cursor.getString(cursor.getColumnIndex(KEY_BOOK_TYPE))));
+                    newBook.setAuthor(cursor.getString(cursor.getColumnIndex(KEY_BOOK_AUTHOR)));
+                    newBook.setUsefullness(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_USEFULLNESS)));
+                    newBook.setCondition(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_CONDITION)));
+                    newBook.setUser(newUser);
+                    books.add(newBook);
+                } while(cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "Error while trying to get all books from database");
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
+        }
+        return books;
+    }
+
+    public List<Book> getBooksByName(final String name) {
+        List<Book> books = new ArrayList<>();
+
+        // SELECT * FROM BOOKS
+        // LEFT OUTER JOIN USERS
+        // ON BOOKS.KEY_BOOK_USER_ID_FK = USERS.KEY_USER_ID
+        String BOOKS_SELECT_QUERY =
+                String.format("SELECT * FROM %s LEFT OUTER JOIN %s ON %s.%s = %s.%s WHERE %s.%s LIKE %%%s%%",
+                        TABLE_BOOKS,
+                        TABLE_USERS,
+                        TABLE_BOOKS, KEY_BOOK_USER_ID_FK,
+                        TABLE_USERS, KEY_USER_ID,
+                        TABLE_BOOKS, KEY_BOOK_NAME,
+                        name);
+
+        // "getReadableDatabase()" and "getWriteableDatabase()" return the same object (except under low
+        // disk space scenarios)
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery(BOOKS_SELECT_QUERY, null);
+        try {
+            if (cursor.moveToFirst()) {
+                do {
+                    User newUser = new User(cursor.getString((cursor.getColumnIndex(KEY_USER_EMAIL))),
+                            cursor.getString((cursor.getColumnIndex(KEY_USER_NAME))),
+                            RegisterActivity.Major.valueOf(cursor.getString((cursor.getColumnIndex(KEY_USER_MAJOR)))));
+
+                    Book newBook = new Book(cursor.getString(cursor.getColumnIndex(KEY_BOOK_NAME)),
+                            RegisterActivity.Major.valueOf(cursor.getString(cursor.getColumnIndex(KEY_BOOK_TYPE))));
+                    newBook.setAuthor(cursor.getString(cursor.getColumnIndex(KEY_BOOK_AUTHOR)));
+                    newBook.setUsefullness(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_USEFULLNESS)));
+                    newBook.setCondition(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_CONDITION)));
+                    newBook.setUser(newUser);
+                    books.add(newBook);
+                } while(cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "Error while trying to get all books from database");
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
+        }
+        return books;
+    }
+
+    public List<Book> getBooksByAuthor(final String name) {
+        List<Book> books = new ArrayList<>();
+
+        // SELECT * FROM BOOKS
+        // LEFT OUTER JOIN USERS
+        // ON BOOKS.KEY_BOOK_USER_ID_FK = USERS.KEY_USER_ID
+        String BOOKS_SELECT_QUERY =
+                String.format("SELECT * FROM %s LEFT OUTER JOIN %s ON %s.%s = %s.%s WHERE %s.%s LIKE %%%s%%",
+                        TABLE_BOOKS,
+                        TABLE_USERS,
+                        TABLE_BOOKS, KEY_BOOK_USER_ID_FK,
+                        TABLE_USERS, KEY_USER_ID,
+                        TABLE_BOOKS, KEY_BOOK_AUTHOR,
+                        name);
+
+        // "getReadableDatabase()" and "getWriteableDatabase()" return the same object (except under low
+        // disk space scenarios)
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery(BOOKS_SELECT_QUERY, null);
+        try {
+            if (cursor.moveToFirst()) {
+                do {
+                    User newUser = new User(cursor.getString((cursor.getColumnIndex(KEY_USER_EMAIL))),
+                            cursor.getString((cursor.getColumnIndex(KEY_USER_NAME))),
+                            RegisterActivity.Major.valueOf(cursor.getString((cursor.getColumnIndex(KEY_USER_MAJOR)))));
+
+                    Book newBook = new Book(cursor.getString(cursor.getColumnIndex(KEY_BOOK_NAME)),
+                            RegisterActivity.Major.valueOf(cursor.getString(cursor.getColumnIndex(KEY_BOOK_TYPE))));
+                    newBook.setAuthor(cursor.getString(cursor.getColumnIndex(KEY_BOOK_AUTHOR)));
+                    newBook.setUsefullness(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_USEFULLNESS)));
+                    newBook.setCondition(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_CONDITION)));
+                    newBook.setUser(newUser);
+                    books.add(newBook);
+                } while(cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "Error while trying to get all books from database");
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
+        }
+        return books;
     }
 }
