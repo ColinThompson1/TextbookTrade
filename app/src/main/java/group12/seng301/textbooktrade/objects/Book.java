@@ -15,7 +15,7 @@ public class Book {
         this.topic = topic;
     }
 
-    public Book(String name, RegisterActivity.Major topic, String Author) {
+    public Book(String name, RegisterActivity.Major topic, String author) {
         this.name = name;
         this.topic = topic;
         this.author = author;
