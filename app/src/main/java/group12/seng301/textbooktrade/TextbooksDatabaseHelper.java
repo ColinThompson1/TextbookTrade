@@ -5,9 +5,12 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.drawable.Drawable;
 import android.util.EventLogTags;
 import android.util.Log;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -258,10 +261,9 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
                 do {
                     User newUser = new User(cursor.getString((cursor.getColumnIndex(KEY_USER_EMAIL))),
                             cursor.getString((cursor.getColumnIndex(KEY_USER_NAME))),
-                            RegisterActivity.Major.valueOf(cursor.getString((cursor.getColumnIndex(KEY_USER_MAJOR)))));
-
+                            RegisterActivity.Major.valueFor(cursor.getString((cursor.getColumnIndex(KEY_USER_MAJOR)))));
                     Book newBook = new Book(cursor.getString(cursor.getColumnIndex(KEY_BOOK_NAME)),
-                            RegisterActivity.Major.valueOf(cursor.getString(cursor.getColumnIndex(KEY_BOOK_TYPE))));
+                            RegisterActivity.Major.valueFor(cursor.getString(cursor.getColumnIndex(KEY_BOOK_TYPE))));
                     newBook.setAuthor(cursor.getString(cursor.getColumnIndex(KEY_BOOK_AUTHOR)));
                     newBook.setUsefullness(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_USEFULLNESS)));
                     newBook.setCondition(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_CONDITION)));
@@ -270,6 +272,7 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
                 } while(cursor.moveToNext());
             }
         } catch (Exception e) {
+            e.printStackTrace();
             Log.d(TAG, "Error while trying to get all books from database");
         } finally {
             if (cursor != null && !cursor.isClosed()) {
@@ -304,10 +307,10 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
                 do {
                     User newUser = new User(cursor.getString((cursor.getColumnIndex(KEY_USER_EMAIL))),
                             cursor.getString((cursor.getColumnIndex(KEY_USER_NAME))),
-                            RegisterActivity.Major.valueOf(cursor.getString((cursor.getColumnIndex(KEY_USER_MAJOR)))));
+                            RegisterActivity.Major.valueFor(cursor.getString((cursor.getColumnIndex(KEY_USER_MAJOR)))));
 
                     Book newBook = new Book(cursor.getString(cursor.getColumnIndex(KEY_BOOK_NAME)),
-                            RegisterActivity.Major.valueOf(cursor.getString(cursor.getColumnIndex(KEY_BOOK_TYPE))));
+                            RegisterActivity.Major.valueFor(cursor.getString(cursor.getColumnIndex(KEY_BOOK_TYPE))));
                     newBook.setAuthor(cursor.getString(cursor.getColumnIndex(KEY_BOOK_AUTHOR)));
                     newBook.setUsefullness(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_USEFULLNESS)));
                     newBook.setCondition(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_CONDITION)));
@@ -349,10 +352,10 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
                 do {
                     User newUser = new User(cursor.getString((cursor.getColumnIndex(KEY_USER_EMAIL))),
                             cursor.getString((cursor.getColumnIndex(KEY_USER_NAME))),
-                            RegisterActivity.Major.valueOf(cursor.getString((cursor.getColumnIndex(KEY_USER_MAJOR)))));
+                            RegisterActivity.Major.valueFor(cursor.getString((cursor.getColumnIndex(KEY_USER_MAJOR)))));
 
                     Book newBook = new Book(cursor.getString(cursor.getColumnIndex(KEY_BOOK_NAME)),
-                            RegisterActivity.Major.valueOf(cursor.getString(cursor.getColumnIndex(KEY_BOOK_TYPE))));
+                            RegisterActivity.Major.valueFor(cursor.getString(cursor.getColumnIndex(KEY_BOOK_TYPE))));
                     newBook.setAuthor(cursor.getString(cursor.getColumnIndex(KEY_BOOK_AUTHOR)));
                     newBook.setUsefullness(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_USEFULLNESS)));
                     newBook.setCondition(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_CONDITION)));
@@ -394,10 +397,10 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
                 do {
                     User newUser = new User(cursor.getString((cursor.getColumnIndex(KEY_USER_EMAIL))),
                             cursor.getString((cursor.getColumnIndex(KEY_USER_NAME))),
-                            RegisterActivity.Major.valueOf(cursor.getString((cursor.getColumnIndex(KEY_USER_MAJOR)))));
+                            RegisterActivity.Major.valueFor(cursor.getString((cursor.getColumnIndex(KEY_USER_MAJOR)))));
 
                     Book newBook = new Book(cursor.getString(cursor.getColumnIndex(KEY_BOOK_NAME)),
-                            RegisterActivity.Major.valueOf(cursor.getString(cursor.getColumnIndex(KEY_BOOK_TYPE))));
+                            RegisterActivity.Major.valueFor(cursor.getString(cursor.getColumnIndex(KEY_BOOK_TYPE))));
                     newBook.setAuthor(cursor.getString(cursor.getColumnIndex(KEY_BOOK_AUTHOR)));
                     newBook.setUsefullness(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_USEFULLNESS)));
                     newBook.setCondition(cursor.getInt(cursor.getColumnIndex(KEY_BOOK_CONDITION)));
@@ -413,5 +416,16 @@ public class TextbooksDatabaseHelper extends SQLiteOpenHelper {
             }
         }
         return books;
+    }
+
+
+    public static Drawable LoadImageFromWebOperations(String url) {
+        try {
+            InputStream is = (InputStream) new URL(url).getContent();
+            Drawable d = Drawable.createFromStream(is, "src name");
+            return d;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

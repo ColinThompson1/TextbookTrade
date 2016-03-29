@@ -352,6 +352,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     intent.addFlags(
                             Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
                     startActivity(intent);
+                    activity.finish();
                 }
                 return false;
             }
