@@ -23,15 +23,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".RegisterActivity" >
+        <activity android:name=".RegisterActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".LoginActivity" />
         </activity>
-        <activity
-            android:name=".BookListActivity"
-            android:label="@string/title_book_list"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity
             android:name=".BookDetailActivity"
             android:label="@string/title_book_detail"
@@ -41,6 +37,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="group12.seng301.textbooktrade.BookListActivity" />
         </activity>
+        <activity
+            android:name=".BookListActivity"
+            android:label="@string/title_book_list"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>
