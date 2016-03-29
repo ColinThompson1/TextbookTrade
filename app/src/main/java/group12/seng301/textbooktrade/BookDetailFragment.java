@@ -61,7 +61,7 @@ public class BookDetailFragment extends Fragment {
 
         // Show the dummy content as text in a TextView.
         if (mItem != null) {
-            ((TextView) rootView.findViewById(R.id.book_detail)).setText(mItem.book.getAuthor());
+            ((TextView) rootView.findViewById(R.id.book_detail)).setText("<More detailed info>");
         }
 
         return rootView;
